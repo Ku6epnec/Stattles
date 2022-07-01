@@ -2,9 +2,12 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
+using System;
 
 public class PlayFabLogin : MonoBehaviour
 {
+    private const string AuthGuidKey = "auth_guid";
+
     [SerializeField] private TMP_InputField Result;
         
     public void TryToLogin()
@@ -12,13 +15,21 @@ public class PlayFabLogin : MonoBehaviour
         if (string.IsNullOrEmpty(PlayFabSettings.staticSettings.TitleId))
             PlayFabSettings.staticSettings.TitleId = "1B50D";
 
+        var needCreation = PlayerPrefs.HasKey(AuthGuidKey);
+        var id = PlayerPrefs.GetString(AuthGuidKey, Guid.NewGuid().ToString());
+
         var request = new LoginWithCustomIDRequest
         {
-            CustomId = "Player 1",
-            CreateAccount = true
+            CustomId = id,
+            CreateAccount = !needCreation
         };
 
-        PlayFabClientAPI.LoginWithCustomID(request, OnLoginSuccess, OnLoginError);
+        PlayFabClientAPI.LoginWithCustomID(request, success =>
+        {
+            PlayerPrefs.SetString(AuthGuidKey, id);
+            OnLoginSuccess(success);
+        },
+            OnLoginError);
     }
 
     private void OnLoginSuccess(LoginResult result)

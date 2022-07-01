@@ -382,8 +382,13 @@
 "Assets/Photon/PhotonLibs/WebSocket/SocketWebTcp.cs"
 "Assets/Photon/PhotonLibs/WebSocket/WebSocket.cs"
 "Assets/Photon/PhotonRealtime/Demos/DemoLoadBalancing/ConnectAndJoinRandomLb.cs"
+"Assets/Scripts/AccountDataWindowBase.cs"
+"Assets/Scripts/CreateAccountWindow.cs"
+"Assets/Scripts/EnterInGameWindow.cs"
 "Assets/Scripts/PhotonLauncer.cs"
+"Assets/Scripts/PlayFabAccountManager.cs"
 "Assets/Scripts/PlayFabLogin.cs"
+"Assets/Scripts/SignInWindow.cs"
 -langversion:9.0
 
 /deterministic
