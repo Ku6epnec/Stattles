@@ -26,7 +26,6 @@ public class EnterInGameWindow : MonoBehaviour
     {
         _signInCanvas.enabled = true;
         _enterInGameCanvas.enabled = false;
-
     }
 
     private void OpenCreateAccountWindow()

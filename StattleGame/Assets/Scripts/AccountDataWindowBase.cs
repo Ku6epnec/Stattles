@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class AccountDataWindowBase : MonoBehaviour
 {
@@ -13,6 +14,11 @@ public class AccountDataWindowBase : MonoBehaviour
     private void Start()
     {
         SubscriptionsElementsUi();
+    }
+
+    private void Update()
+    {
+        
     }
 
     protected virtual void SubscriptionsElementsUi()
