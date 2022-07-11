@@ -62,7 +62,7 @@ public class PlayFabAccountManager : MonoBehaviour
         _sliderLoadingProcess.value = _endTimer; 
         _timerStatus = false;
         _imageEndLoading.color = Color.magenta;
-        //_catalogLabel.text = "Catalog.data: " + File.ReadAllText("C:/Unity/Stattles/Assets/title-1B50D-FirstCatalog.json");
+        //_catalogLabel.text = "Catalog.data: " + File.ReadAllText("Assets/title-1B50D-FirstCatalog.json");
     }
 
 
