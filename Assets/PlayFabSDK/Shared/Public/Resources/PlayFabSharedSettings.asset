@@ -15,7 +15,7 @@ MonoBehaviour:
   TitleId: 1B50D
   DeveloperSecretKey: CXQY17H17ZI14WFAYIQECRGP1QPNZFYTNNBIJWB13IZS3JJIPX
   ProductionEnvironmentUrl: 
-  RequestType: 2
+  RequestType: 0
   DisableDeviceInfo: 0
   DisableFocusTimeCollection: 0
   RequestTimeout: 2000
