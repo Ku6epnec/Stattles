@@ -7,7 +7,6 @@
 // </summary>
 // <author>developer@exitgames.com</author>
 // --------------------------------------------------------------------------------------------------------------------
-
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -25,6 +24,8 @@ namespace Photon.Pun.Demo.PunBasics
 
         [Tooltip("The current Health of our player")]
         public float Health = 1f;
+
+        public bool _healthRestore = false;
 
         [Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
         public static GameObject LocalPlayerInstance;
@@ -135,7 +136,13 @@ namespace Photon.Pun.Demo.PunBasics
             {
                 this.ProcessInputs();
 
-                if (this.Health <= 0f)
+                if (_healthRestore)
+                {
+                    Health = 1.0f;
+                    _healthRestore = false;
+                }
+
+                if (Health <= 0f)
                 {
                     GameManager.Instance.LeaveRoom();
                 }
@@ -168,7 +175,7 @@ namespace Photon.Pun.Demo.PunBasics
                 return;
             }
 
-            this.Health -= 0.1f;
+            Health -= 0.1f;
         }
 
         /// <summary>
@@ -192,7 +199,7 @@ namespace Photon.Pun.Demo.PunBasics
             }
 
             // we slowly affect health when beam is constantly hitting us, so player has to move to prevent death.
-            this.Health -= 0.1f*Time.deltaTime;
+            Health -= 0.1f*Time.deltaTime;
         }
 
 
@@ -274,13 +281,15 @@ namespace Photon.Pun.Demo.PunBasics
             {
                 // We own this player: send the others our data
                 stream.SendNext(this.IsFiring);
-                stream.SendNext(this.Health);
+                stream.SendNext(_healthRestore);
+                stream.SendNext(Health);
             }
             else
             {
                 // Network player, receive data
                 this.IsFiring = (bool)stream.ReceiveNext();
-                this.Health = (float)stream.ReceiveNext();
+                _healthRestore = (bool)stream.ReceiveNext();
+                Health = (float)stream.ReceiveNext();
             }
         }
 

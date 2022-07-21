@@ -3,6 +3,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
 using System;
+using System.Collections.Generic;
 
 public class PlayFabLogin : MonoBehaviour
 {
@@ -37,6 +38,52 @@ public class PlayFabLogin : MonoBehaviour
         Result.image.color = Color.green;
         Debug.Log("Complete!");
         Result.text = "Your connection Success";
+
+        SetUserData(result.PlayFabId);
+        MakePurchase();
+    }
+
+    private void SetUserData(string playFabId)
+    {
+        PlayFabClientAPI.UpdateUserData(new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>
+            {
+                {"time_recieve_daily_revard", DateTime.UtcNow.ToString() },
+            }
+        },
+        result =>
+        {
+            Debug.Log("Complete update user data");
+            GetUserData(playFabId, "time_recieve_daily_revard");
+        }, OnLoginError);
+    }
+
+    private void GetUserData(string playFabId, string keyData)
+    {
+        PlayFabClientAPI.GetUserData(new GetUserDataRequest
+        {
+            PlayFabId = playFabId
+        },
+        result =>
+        {
+            Debug.Log(keyData + ": " + result.Data[keyData].Value);
+        }, OnLoginError);       
+    }
+
+    private void MakePurchase()
+    {
+        PlayFabClientAPI.PurchaseItem(new PurchaseItemRequest
+        {
+            CatalogVersion = "FirstCatalog",
+            ItemId = "health_potion",
+            Price = 5,
+            VirtualCurrency = "SC"
+        },
+        result=>
+        {
+            Debug.Log("Complete purchase");
+        }, OnLoginError);
     }
 
     private void OnLoginError(PlayFabError error)

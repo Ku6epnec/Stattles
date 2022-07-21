@@ -25,7 +25,6 @@ namespace Photon.Pun.Demo.PunBasics
 	/// </summary>
 	public class GameManager : MonoBehaviourPunCallbacks
     {
-
 		#region Public Fields
 
 		static public GameManager Instance;
@@ -52,6 +51,8 @@ namespace Photon.Pun.Demo.PunBasics
 			Instance = this;
 
 			// in case we started this demo with the wrong scene being active, simply load the menu scene
+			Debug.Log("PhotonNetwork.IsConnected status: " + PhotonNetwork.IsConnected);
+			Debug.Log("CurrentRoom status: " + PhotonNetwork.CurrentRoom);
 			if (!PhotonNetwork.IsConnected)
 			{
 				SceneManager.LoadScene("PunBasics-Launcher");
@@ -59,6 +60,7 @@ namespace Photon.Pun.Demo.PunBasics
 				return;
 			}
 
+			Debug.Log("Client state: " + PhotonNetwork.NetworkClientState);
 			if (playerPrefab == null) { // #Tip Never assume public properties of Components are filled up properly, always check and inform the developer of it.
 
 				Debug.LogError("<Color=Red><b>Missing</b></Color> playerPrefab Reference. Please set it up in GameObject 'Game Manager'", this);
@@ -71,7 +73,8 @@ namespace Photon.Pun.Demo.PunBasics
 
 					// we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
 					PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f,5f,0f), Quaternion.identity, 0);
-				}else{
+				}
+				else{
 
 					Debug.LogFormat("Ignoring scene load for {0}", SceneManagerHelper.ActiveSceneName);
 				}
@@ -164,7 +167,7 @@ namespace Photon.Pun.Demo.PunBasics
 
 			Debug.LogFormat( "PhotonNetwork : Loading Level : {0}", PhotonNetwork.CurrentRoom.PlayerCount );
 
-			PhotonNetwork.LoadLevel("PunBasics-Room for "+PhotonNetwork.CurrentRoom.PlayerCount);
+			PhotonNetwork.LoadLevel("PunBasics-Room for " + PhotonNetwork.CurrentRoom.PlayerCount);
 		}
 
 		#endregion

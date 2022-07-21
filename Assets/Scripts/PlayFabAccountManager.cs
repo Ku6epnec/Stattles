@@ -30,7 +30,7 @@ public class PlayFabAccountManager : MonoBehaviour
     private void OnGetCatalogSuccess(GetCatalogItemsResult result)
     {
         ShowCatalog(result.Catalog);
-        Debug.Log("Complete load catalog!");
+        //Debug.Log("Complete load catalog!");
     }
 
     private void ShowCatalog(List<CatalogItem> catalog)
@@ -39,7 +39,7 @@ public class PlayFabAccountManager : MonoBehaviour
         {
             if (item.Bundle == null)
             {
-                Debug.Log("item_id: " + item.ItemId);
+                //Debug.Log("item_id: " + item.ItemId);
                 _catalogLabel.text += "item_id: " + item.ItemId + "\n";
             }
         }
@@ -69,7 +69,7 @@ public class PlayFabAccountManager : MonoBehaviour
     private void OnError(PlayFabError error)
     {
         var errorMessage = error.GenerateErrorReport();
-        Debug.LogError(errorMessage);
+        //Debug.LogError(errorMessage);
         _sliderLoadingProcess.value = _endTimer;
         _timerStatus = false;
         _imageEndLoading.color = Color.red;

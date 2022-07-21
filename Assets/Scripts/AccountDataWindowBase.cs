@@ -39,6 +39,6 @@ public class AccountDataWindowBase : MonoBehaviour
 
     protected void EnterInGameScene()
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(2);
     }
 }
