@@ -6,6 +6,7 @@ using PlayFab.ClientModels;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public class PlayFabAccountManager : MonoBehaviour
 {
@@ -16,6 +17,13 @@ public class PlayFabAccountManager : MonoBehaviour
     [SerializeField] private TMP_Text _loadingValue;
     [SerializeField] private Image _imageEndLoading;
 
+    [SerializeField] private GameObject _newCharacterCreatePanel;
+    [SerializeField] private Button _createCharacterButton;
+    [SerializeField] TMP_InputField _inputField;
+    [SerializeField] private List<SlotCharacterWidget> _slots;
+
+    private string _characterName;
+
     private int _endTimer = 100;
     private bool _timerStatus = true;
 
@@ -25,6 +33,99 @@ public class PlayFabAccountManager : MonoBehaviour
         PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest(), OnGetAccountSuccess, OnError);
         _changeAccountButton.onClick.AddListener(ChangeAccount);
         PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), OnGetCatalogSuccess, OnError);
+
+        foreach (var slot in _slots)
+        {
+            slot.SlotButton.onClick.AddListener(OpenPanerCreateCharacter);
+        }
+
+        _createCharacterButton.onClick.AddListener(CreateCharacterWithItem);
+        _inputField.onValueChanged.AddListener(OnNameChange);
+    }
+
+    private void OnNameChange(string characterName)
+    {
+        _characterName = characterName;
+    }
+
+    private void CreateCharacterWithItem()
+    {
+        PlayFabClientAPI.GrantCharacterToUser(new GrantCharacterToUserRequest
+        {
+            CharacterName = _characterName,
+            ItemId = "character_item"
+        },
+        result =>
+        {
+            UpdateCharacterStatistics(result.CharacterId);
+        }, OnError);
+    }
+
+    private void UpdateCharacterStatistics(string characterId)
+    {
+        PlayFabClientAPI.UpdateCharacterStatistics(new UpdateCharacterStatisticsRequest
+        {
+            CharacterId = characterId,
+            CharacterStatistics = new Dictionary<string, int>
+            {
+                {"Level", 1},
+                {"Gold", 0}
+            }
+        }, result =>
+        {
+            Debug.Log("Complete character!");
+            ClosePanelCreateCharacter();
+            GetCharacter(); 
+        }, OnError);
+    }
+
+    private void OpenPanerCreateCharacter()
+    {
+        _newCharacterCreatePanel.SetActive(true);
+    }
+
+    private void ClosePanelCreateCharacter()
+    {
+        _newCharacterCreatePanel.SetActive(false);
+    }
+
+    private void GetCharacter()
+    {
+        PlayFabClientAPI.GetAllUsersCharacters(new ListUsersCharactersRequest(),
+            result =>
+            {
+                Debug.Log("Character count: " + result.Characters.Count);
+                ShowInfoCharacter(result.Characters);
+            }, OnError);
+    }
+
+    private void ShowInfoCharacter(List<CharacterResult> characters)
+    {
+        if (characters.Count == 0)
+        {
+            foreach(var slot in _slots)
+            {
+                slot.ShowEmptySlot();
+            }
+        }
+        else if(characters.Count > 0 && characters.Count <= _slots.Count)
+        {
+            PlayFabClientAPI.GetCharacterStatistics(new GetCharacterStatisticsRequest
+            {
+                CharacterId = characters.First().CharacterId
+            },
+            result =>
+            {
+                var level = result.CharacterStatistics["Level"].ToString();
+                var gold = result.CharacterStatistics["Gold"].ToString();
+
+                _slots.First().ShowInfoCharacterSlot(characters.First().CharacterName, level, gold);
+            }, OnError);
+        }
+        else
+        {
+            Debug.Log("Add a slots for characters");
+        }
     }
 
     private void OnGetCatalogSuccess(GetCatalogItemsResult result)
