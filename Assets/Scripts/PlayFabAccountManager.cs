@@ -17,6 +17,7 @@ public class PlayFabAccountManager : MonoBehaviour
 
     [SerializeField] private GameObject _newCharacterCreatePanel;
     [SerializeField] private Button _createCharacterButton;
+    [SerializeField] private Button _openCreateCharacterPanelButton;
     [SerializeField] private Button _fightCharacterButton;
     [SerializeField] TMP_InputField _inputField;
     [SerializeField] private SlotCharacterWidget _characterSlot;
@@ -43,6 +44,7 @@ public class PlayFabAccountManager : MonoBehaviour
         PlayFabClientAPI.GetCatalogItems(new GetCatalogItemsRequest(), OnGetCatalogSuccess, OnError);
 
         _createCharacterButton.onClick.AddListener(CreateCharacterWithItem);
+        _openCreateCharacterPanelButton.onClick.AddListener(OpenPanelCreateCharacter);
         _fightCharacterButton.onClick.AddListener(StartFightCharacter);
         _inputField.onValueChanged.AddListener(OnNameChange);
 
@@ -184,6 +186,7 @@ public class PlayFabAccountManager : MonoBehaviour
         },
         result =>
         {
+            _slots.Add(Instantiate(_characterSlot, _conteinerLayout.transform));
             UpdateCharacterStatistics(result.CharacterId);
         }, OnError);
     }
