@@ -9,6 +9,7 @@ using UnityEngine.UI;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine.SceneManagement;
+using System;
 
 public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmakingCallbacks, ILobbyCallbacks
 {
@@ -18,16 +19,22 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
     [SerializeField] private Button _openCloseRoomButton;
     [SerializeField] private Button _startGameButton;
     [SerializeField] private Button _createRandomRoomButton;
+    [SerializeField] private Button _createNewRoomButton;
     [SerializeField] private Button _connectRoomButton;
     [SerializeField] private Button _leaveRoomButton;
     [SerializeField] private TMP_InputField _openCloseRoomInputField;
-    [SerializeField] private TMP_Dropdown _roomListDropdown;
+    //[SerializeField] private TMP_Dropdown _roomListDropdown;
 
     [SerializeField] private GameObject _canvasControl;
 
     [SerializeField] private GameObject _gameManager;
 
     [SerializeField] private GameObject _playerPrefab;
+
+    [SerializeField] private GameObject _roomView;
+    [SerializeField] private RoomWidget _room;
+
+    [SerializeField] private TMP_InputField _roomName;
 
     private const string openText = "Open";
     private const string closeText = "Close";
@@ -43,7 +50,10 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     private Dictionary<string, RoomInfo> cachedRoomList = new Dictionary<string, RoomInfo>();
     private List<RoomInfo> _roomList = new List<RoomInfo>();
-    [SerializeField] private List<TMP_Dropdown.OptionData> _options= new List<TMP_Dropdown.OptionData>();
+
+    private List<RoomWidget> _roomWidgetList = new List<RoomWidget>();
+
+    //[SerializeField] private List<TMP_Dropdown.OptionData> _options= new List<TMP_Dropdown.OptionData>();
 
     bool isConnecting;
     private LoadBalancingClient _loadBalancingClient;
@@ -59,10 +69,10 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
     {
         _openCloseRoomButton.onClick.AddListener(CloseRoom);
         _startGameButton.onClick.AddListener(StartGame);
-        _createRandomRoomButton.onClick.AddListener(OnCreatedRoom);
+        _createNewRoomButton.onClick.AddListener(CreatedNewRoom);
         _leaveRoomButton.onClick.AddListener(OnLeftRoom);
         _connectRoomButton.onClick.AddListener(OnConnectedTestRoom);
-        _roomListDropdown.onValueChanged.AddListener(OnChooseRoom);
+        //_roomListDropdown.onValueChanged.AddListener(OnChooseRoom);
 
         _loadBalancingClient = new LoadBalancingClient();
         _loadBalancingClient.AddCallbackTarget(this);
@@ -74,6 +84,13 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     }
 
+    public void ConnectToRoomWithParams()
+    {
+        _loadBalancingClient.OpJoinRandomRoom();
+        Debug.Log("Попытка зайти в комнату: " + PhotonNetwork.CurrentRoom.Name);
+        Debug.Log(PhotonNetwork.IsConnected);
+    }
+
     private void OnChooseRoom(int roomId)
     {
         _choosenRoom = _roomList[roomId];
@@ -81,6 +98,7 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     private void UpdateCachedRoomList(List<RoomInfo> roomList)
     {
+        //PhotonNetwork.JoinRoom(roomList.First().Name);
         Debug.Log("Update cached RoomList with Room count: " + roomList.Count);
         for (int i = 0; i < roomList.Count; i++)
         {
@@ -96,8 +114,9 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
                 cachedRoomList[info.Name] = info;
                 Debug.Log("New Room name: " + cachedRoomList[info.Name]);
                 //_options.AddRange(new);
-                _roomListDropdown.AddOptions(_options);
-                _roomListDropdown.itemText.text = info.Name;
+                _roomWidgetList[i].AddRoomInfo(_loadBalancingClient.CurrentRoom.Name, _loadBalancingClient.CurrentRoom.IsOpen);
+                //_roomListDropdown.AddOptions(_options);
+                //_roomListDropdown.itemText.text = info.Name;
             }
         }
     }
@@ -168,7 +187,8 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         Debug.Log("Connected to Master");
         //_loadBalancingClient.OpJoinRandomRoom();
         //JoinTestRoom();
-        //_loadBalancingClient.OpJoinLobby(_sqlLobby);
+        _loadBalancingClient.OpJoinLobby(_sqlLobby);
+        OnRoomListUpdate(_roomList);
         //foreach (var room in )
         //_loadBalancingClient.OpJoinLobby(default);
         //_loadBalancingClient.OpJoinRandomRoom();
@@ -199,16 +219,45 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         //SceneManager.LoadScene(3);
     }
 
+    public void CreatedNewRoom()
+    {
+        var roomOptions = new RoomOptions
+        {
+            MaxPlayers = 12,//(byte)_players,
+            CustomRoomProperties = new Hashtable { { MONEY_PROPERTY_KEY, 400 }, { MAP_PROPERTY_KEY, "Map_3" } },
+            CustomRoomPropertiesForLobby = new[] { MONEY_PROPERTY_KEY, MAP_PROPERTY_KEY },
+            IsVisible = true,
+            PublishUserId = true
+        };
+
+        var enterRoomParams = new EnterRoomParams
+        {
+            RoomName = _roomName.text,
+            RoomOptions = roomOptions,
+            Lobby = _sqlLobby,
+            ExpectedUsers = new[] { "111", "222", "333", "444" }
+        };
+
+        Debug.Log("Try Create new ROOM!");
+        _loadBalancingClient.OpCreateRoom(enterRoomParams);
+    }
+
     public void OnCreatedRoom()
     {
         Debug.Log("Created room");
         _roomList.Add(_loadBalancingClient.CurrentRoom);
+        Debug.Log("_loadBalancingClient.CurrentRoom: " + _roomName.text);
+        var NewRoom = Instantiate(_room, _roomView.transform);
+        NewRoom._buttonConnectRoom.onClick.AddListener(ConnectToRoomWithParams);
+        NewRoom.name = _roomName.text;
+        _roomWidgetList.Add(NewRoom);
+        NewRoom.AddRoomInfo(_roomName.text, true);
         OnRoomListUpdate(_roomList);
     }
 
     public void OnCreateRoomFailed(short returnCode, string message)
     {
-        
+        Debug.Log("Create room Failed");
     }
 
     public void OnCustomAuthenticationFailed(string debugMessage)
@@ -240,7 +289,7 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         {
             SqlLobbyFilter = sqlLobbyFilter
         };
-        _loadBalancingClient.OpJoinRandomRoom(opJoinRandomRoomParams);
+        //_loadBalancingClient.OpJoinRandomRoom(opJoinRandomRoomParams);
         Debug.Log("Joined Lobby");
     }
 
