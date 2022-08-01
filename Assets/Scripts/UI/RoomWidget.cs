@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Photon.Realtime;
 
 public class RoomWidget : MonoBehaviour
 {
@@ -12,9 +13,12 @@ public class RoomWidget : MonoBehaviour
 
     public Button _buttonConnectRoom => _buttonConnect;
 
-    public void AddRoomInfo(string name, bool status)
+    public RoomInfo _roomInfo { get; private set; }
+
+    public void AddRoomInfo(bool status, RoomInfo roomInfo)
     {
-        _nameLabel.text = name;
+        _roomInfo = roomInfo;
+        _nameLabel.text = roomInfo.Name;
         _status = status;
         if (_status)
         {
