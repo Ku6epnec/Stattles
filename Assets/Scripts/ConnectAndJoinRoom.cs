@@ -22,8 +22,8 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
     [SerializeField] private Button _createNewRoomButton;
     [SerializeField] private Button _connectRoomButton;
     [SerializeField] private Button _leaveRoomButton;
+    [SerializeField] private Button _refreshRoomListButton;
     [SerializeField] private TMP_InputField _openCloseRoomInputField;
-    //[SerializeField] private TMP_Dropdown _roomListDropdown;
 
     [SerializeField] private GameObject _canvasControl;
 
@@ -49,11 +49,10 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
     private TypedLobby _asyncRandomLobby = new TypedLobby("asyncRandomLobby", LobbyType.AsyncRandomLobby);
 
     private Dictionary<string, RoomInfo> cachedRoomList = new Dictionary<string, RoomInfo>();
-    private List<RoomInfo> _roomList = new List<RoomInfo>();
+    public List<RoomInfo> _roomList = new List<RoomInfo>();
 
     private List<RoomWidget> _roomWidgetList = new List<RoomWidget>();
-
-    //[SerializeField] private List<TMP_Dropdown.OptionData> _options= new List<TMP_Dropdown.OptionData>();
+    Action<List<RoomInfo>> callback = null;
 
     bool isConnecting;
     private LoadBalancingClient _loadBalancingClient;
@@ -70,9 +69,9 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         _openCloseRoomButton.onClick.AddListener(CloseRoom);
         _startGameButton.onClick.AddListener(StartGame);
         _createNewRoomButton.onClick.AddListener(CreatedNewRoom);
-        _leaveRoomButton.onClick.AddListener(OnLeftRoom);
+        _leaveRoomButton.onClick.AddListener(LeaveRoom);
         _connectRoomButton.onClick.AddListener(OnConnectedTestRoom);
-        //_roomListDropdown.onValueChanged.AddListener(OnChooseRoom);
+        _refreshRoomListButton.onClick.AddListener(RefreshRoomList);
 
         _loadBalancingClient = new LoadBalancingClient();
         _loadBalancingClient.AddCallbackTarget(this);
@@ -81,7 +80,18 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         {
             Debug.LogError("Error connections");
         }
+    }
 
+    private void LeaveRoom()
+    {
+        _loadBalancingClient.OpLeaveRoom(true, true);
+    }
+
+    private void RefreshRoomList()
+    {
+        Debug.Log("_loadBalancingClient.InRoom: " + _loadBalancingClient.InRoom);
+        Debug.Log("_loadBalancingClient.RoomsCount: " + _loadBalancingClient.RoomsCount);
+        OnRoomListUpdate(_roomList);
     }
 
     public void ConnectToRoomWithParams()
@@ -98,7 +108,6 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     private void UpdateCachedRoomList(List<RoomInfo> roomList)
     {
-        //PhotonNetwork.JoinRoom(roomList.First().Name);
         Debug.Log("Update cached RoomList with Room count: " + roomList.Count);
         for (int i = 0; i < roomList.Count; i++)
         {
@@ -110,13 +119,9 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
             }
             else
             {
-                //Debug.Log("Add room, and RoomList: " + cachedRoomList.Count);
                 cachedRoomList[info.Name] = info;
                 Debug.Log("New Room name: " + cachedRoomList[info.Name]);
-                //_options.AddRange(new);
                 _roomWidgetList[i].AddRoomInfo(_loadBalancingClient.CurrentRoom.Name, _loadBalancingClient.CurrentRoom.IsOpen);
-                //_roomListDropdown.AddOptions(_options);
-                //_roomListDropdown.itemText.text = info.Name;
             }
         }
     }
@@ -179,21 +184,15 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     public void OnConnected()
     {
-        
+        Debug.Log("OnConnected");
     }
 
     public void OnConnectedToMaster()
     {
         Debug.Log("Connected to Master");
-        //_loadBalancingClient.OpJoinRandomRoom();
-        //JoinTestRoom();
         _loadBalancingClient.OpJoinLobby(_sqlLobby);
         OnRoomListUpdate(_roomList);
-        //foreach (var room in )
-        //_loadBalancingClient.OpJoinLobby(default);
-        //_loadBalancingClient.OpJoinRandomRoom();
-        //_loadBalancingClient.OpFindFriends(new[] { _loadBalancingClient.UserId });
-        //_loadBalancingClient.CurrentRoom.Players[0].UserId
+        Debug.Log("Подключились к лобби: " + _loadBalancingClient.CurrentLobby);
     }
 
     private void JoinTestRoom()
@@ -214,16 +213,14 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
             ExpectedUsers = new[] { "111", "222", "333", "444" }
         };
         PhotonNetwork.ConnectUsingSettings();
-        //PhotonNetwork.Instantiate(_playerPrefab.name, new Vector3(0f, 5f, 0f), Quaternion.identity, 0);
         _loadBalancingClient.OpCreateRoom(enterRoomParams);
-        //SceneManager.LoadScene(3);
     }
 
     public void CreatedNewRoom()
     {
         var roomOptions = new RoomOptions
         {
-            MaxPlayers = 12,//(byte)_players,
+            MaxPlayers = 12,
             CustomRoomProperties = new Hashtable { { MONEY_PROPERTY_KEY, 400 }, { MAP_PROPERTY_KEY, "Map_3" } },
             CustomRoomPropertiesForLobby = new[] { MONEY_PROPERTY_KEY, MAP_PROPERTY_KEY },
             IsVisible = true,
@@ -262,7 +259,7 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     public void OnCustomAuthenticationFailed(string debugMessage)
     {
-        
+        Debug.Log("OnCustomAuthenticationFailed");
     }
 
     public void OnCustomAuthenticationResponse(Dictionary<string, object> data)
@@ -278,7 +275,7 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     public void OnFriendListUpdate(List<Photon.Realtime.FriendInfo> friendList)
     {
-
+        Debug.Log("OnFriendListUpdate");
     }
 
     public void OnJoinedLobby()
@@ -300,13 +297,7 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
         Debug.Log("Status room: " + _loadBalancingClient.CurrentRoom);
         CheckStatusRoom();
         Debug.Log("CurrentRoom status: " + PhotonNetwork.CurrentRoom);
-        //PhotonNetwork.LoadLevel("PunBasics-Room for 1");
-
         Instantiate(_playerPrefab, new Vector3(0f, 5f, 0f), Quaternion.identity);
-        //Instantiate(_gameManager);
-        //PhotonNetwork.Instantiate(this.playerPrefab.name, new Vector3(0f, 5f, 0f), Quaternion.identity, 0);
-        //PhotonNetwork.LoadLevel("PunBasics-Room for 1");
-        //_loadBalancingClient.OpLeaveRoom(false, false);
     }
 
     public void OnJoinRandomFailed(short returnCode, string message)
@@ -333,19 +324,21 @@ public class ConnectAndJoinRoom : MonoBehaviour, IConnectionCallbacks, IMatchmak
 
     public void OnLobbyStatisticsUpdate(List<TypedLobbyInfo> lobbyStatistics)
     {
-
+        Debug.Log("OnLobbyStatisticsUpdate");
     }
 
     public void OnRegionListReceived(RegionHandler regionHandler)
     {
-
+        Debug.Log("OnRegionListReceived");
     }
 
     public void OnRoomListUpdate(List<RoomInfo> roomList)
     {
-        //roomList.First().
-        UpdateCachedRoomList(roomList);
-        Debug.Log("Room list Update");
+        foreach (RoomInfo room in roomList)
+        {
+            Debug.Log("Room list Update");
+            UpdateCachedRoomList(roomList);
+        }
     }
 
     private void StartGame()
